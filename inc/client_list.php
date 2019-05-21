@@ -2,7 +2,7 @@
 include('config.php');
 
 $max = $_SESSION['hotspotID'];
-$TotalClient = 0;
+//$TotalClient = 0;
 
 $clientCount = shell_exec('netsh wlan show hostednetwork | findstr "Number of clients"');
 $getClient = shell_exec('arp -a | findstr /r "192\.168\.137\.[2-9][^0-9] 192\.168\.137\.[0-9][0-9][^0-9] 192\.168\.137\.[0-1][0-9][0-9] 192\.168\.137\.2[0-46-9][0-9] 192\.168\.137\.25[0-4]"');
@@ -55,7 +55,7 @@ foreach($clientFinal as $c){
 }   
 
 //get total client
-$clientNo2 = json_encode($clientCount);
+/*$clientNo2 = json_encode($clientCount);
 $clientNo3 = trim($clientNo2,'"');
 $clientNo4 = array_map('trim',array_filter(explode('\n',$clientNo3)));
 foreach($clientNo4 as $clientNo5){
@@ -64,7 +64,7 @@ foreach($clientNo4 as $clientNo5){
     }else{
         $TotalClient = filter_var($clientNo5, FILTER_SANITIZE_NUMBER_INT);
     }
-}
+}*/
 
 //check disconnected client
 $clientInserted = fetchRows("SELECT client FROM client_note WHERE session='$max'");
@@ -86,7 +86,7 @@ if(!empty($clientDC)){
 //data content
 $getSession = fetchRow("SELECT * FROM session WHERE session_id='$max'");
 $getClient = fetchRows("SELECT * FROM client_note JOIN client on(client_note.client=client.mac) WHERE session='$max' ORDER by block_status DESC");
-$totalClient = numRows("SELECT * FROM client_note JOIN client on(client_note.client=client.mac) WHERE session='$max' ORDER by block_status DESC");
+$countClient = numRows("SELECT * FROM client_note JOIN client on(client_note.client=client.mac) WHERE session='$max' ORDER by block_status DESC");
 ?>
 
 <div class="well">
@@ -112,8 +112,8 @@ $totalClient = numRows("SELECT * FROM client_note JOIN client on(client_note.cli
         <tr>
             <td><b>Total Connected</b></td>
             <td>
-                <div class="badge"><i class="fa fa-user"></i>
-                    <?php echo $TotalClient; ?>
+                <div class="badge"><i class="fa fa-user"></i> 
+                    <?php echo $countClient; ?>
                 </div>
             </td>
         </tr>
@@ -136,14 +136,27 @@ $totalClient = numRows("SELECT * FROM client_note JOIN client on(client_note.cli
     <?php 
         if($getClient){
             foreach($getClient as $b => $g){ $b++;
+                $client_id = $g['id'];
+                $client_ip = $g['ipaddress'];
+                $client_mac = $g['mac'];
+                $connect_duration = $g['usage_limit'];
 
                 //client usage limit perform
-                $connect_duration = $g['usage_limit'];
                 if($g['duration_limit'] == '0' ){
                     $duration_left = '<div class="badge badge-default">Not Set</div>';                    
                 }else{
                     $balance = (strtotime($connect_duration)- strtotime(date('H:i:s')));
-                    $duration_left = '<div class="badge badge-success">'.round($balance).' sec</div>';                     
+                    $timer = round($balance);
+                    if($timer >= 0){
+                        runQuery("UPDATE client SET block_status = 'A' WHERE client.mac = '$client_mac' ");
+                        shell_exec('route delete '.$client_ip.'');
+                        $duration_left = '<div class="badge badge-success">'.$timer.' sec</div>';   
+                    }else{
+                        runQuery("UPDATE client_note SET duration_limit = '0' WHERE id = '$client_id' ");
+                        runQuery("UPDATE client SET block_status = 'B' WHERE client.mac = '$client_mac' ");
+                        shell_exec('route add '.$client_ip.' mask 255.255.255.255 192.168.137.1 if 1 -p');	
+                        $duration_left = '<div class="badge badge-default">Time out</div>'; 
+                    }        
                 }
 
                 //block status
@@ -161,8 +174,8 @@ $totalClient = numRows("SELECT * FROM client_note JOIN client on(client_note.cli
                 <br>
                 <small><?php echo elapsed($g['date']); ?></small>
             </td>
-            <td><?php echo $g['mac']; ?></td>
-            <td><?php echo $g['ipaddress']; ?></td>
+            <td><?php echo $client_mac; ?></td>
+            <td><?php echo $client_ip; ?></td>
             <td><?php echo $duration_left; ?></td>
             <td><?php echo $status; ?></td>
             <td>

@@ -72,20 +72,30 @@
 		<div class='span6 main'>
 			<div class="title-content" style="margin-top: 50px;">
 				Home Menu
-				<div class="pull-right">
-					<a onclick="return confirm('Show visited history?')" href="inc/visited_history.php">
-						<small><i class="fa fa-history"></i> Visited History</small>
-					</a>
-				</div>
 			</div>
 			<center>
-				<?php if($hotspot == 'yes'){ ?>
-					<a href="menuClient.php" class="span4"><img src="image/connected.png">Connected Device</a>
-				<?php }else{ ?>
-					<a id="connected-no" onclick="alert('Hotspot not started')" class="span4 menu-img"><img src="image/connected-no.png">Connected Device</a>					
-				<?php } ?>
-				<a href="menuProxy.php" class="span4 menu-img"><img src="image/block.png">Web Filter</a>
-				<a href="menuLog.php" class="span4 menu-img"><img src="image/log.png">Activity Log</a>
+			<?php 
+				if($hotspot == 'yes'){ 
+					$button1_img = 'image/connected.png';
+					$button2_img = 'image/block-no.png';
+					$button3_img = 'image/log-no.png';
+
+					$button1_link = 'menuClient.php';
+					$button2_link = '#';
+					$button3_link = '#';
+				}else{
+					$button1_img = 'image/connected-no.png';
+					$button2_img = 'image/block.png';
+					$button3_img = 'image/log.png';
+
+					$button1_link = '#';
+					$button2_link = 'menuProxy.php';
+					$button3_link = 'menuLog.php';
+				}
+			?>
+				<a href="<?php echo $button1_link; ?>" class="span4"><img src="<?php echo $button1_img; ?>">Connected Device</a>
+				<a href="<?php echo $button2_link; ?>" class="span4 menu-img"><img src="<?php echo $button2_img; ?>">Web Filter</a>
+				<a href="<?php echo $button3_link; ?>" class="span4 menu-img"><img src="<?php echo $button3_img; ?>">Activity Log</a>
 			</center>
 		</div>
 		<!--  Menu -->

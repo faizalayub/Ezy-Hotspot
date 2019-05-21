@@ -112,7 +112,8 @@
 
 </html>
 <script>
-	setInterval(function(){
+	/*setInterval(function(){
 		$("#refresh-content").load("inc/client_list.php");
-	},800);
+	},2000);*/
+	$("#refresh-content").load("inc/client_list.php");
 </script>
