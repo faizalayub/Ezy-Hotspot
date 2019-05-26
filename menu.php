@@ -20,7 +20,52 @@
 
 		//count
 		$blockedProxy = numRows("SELECT * FROM proxy");
-		$blockedUser = numRows("SELECT * FROM client WHERE block_status !='A'");		
+		$blockedUser = numRows("SELECT * FROM client WHERE block_status !='A'");	
+		
+		//get week record
+		$mon = [];
+		$tue = [];
+		$wed = [];
+		$thu = [];
+		$fri = [];
+		$sat = [];
+		$sun = [];
+		$data = fetchRows("SELECT start,end FROM session WHERE (start >= '2019-05-27' AND start <= '2019-06-02') AND end != '' ");
+		foreach($data as $k){
+			$cut = explode(' ',$k['start']);
+			if($cut[0] == '2019-05-27'){
+				$mon[] = (strtotime($k['end'])- strtotime($k['start']))/60;
+			}
+			if($cut[0] == '2019-05-28'){
+				$tue[] = (strtotime($k['end'])- strtotime($k['start']))/60;
+			}
+			if($cut[0] == '2019-05-29'){
+				$wed[] = (strtotime($k['end'])- strtotime($k['start']))/60;
+			}
+			if($cut[0] == '2019-05-30'){
+				$thu[] = (strtotime($k['end'])- strtotime($k['start']))/60;
+			}
+			if($cut[0] == '2019-05-31'){
+				$fri[] = (strtotime($k['end'])- strtotime($k['start']))/60;
+			}
+			if($cut[0] == '2019-06-01'){
+				$sat[] = (strtotime($k['end'])- strtotime($k['start']))/60;
+			}
+			if($cut[0] == '2019-06-02'){
+				$sun[] = (strtotime($k['end'])- strtotime($k['start']))/60;
+			}
+		}
+		$result = [
+				round(array_sum($mon),2), 
+				round(array_sum($tue),2), 
+				round(array_sum($wed),2), 
+				round(array_sum($thu),2), 
+				round(array_sum($fri),2), 
+				round(array_sum($sat),2), 
+				round(array_sum($sun),2)
+			];
+		$weekgraph = json_encode($result);
+		
 	?>
 </head>
 <body>
@@ -70,9 +115,7 @@
 
 		<!--  Menu -->
 		<div class='span6 main'>
-			<div class="title-content" style="margin-top: 50px;">
-				Home Menu
-			</div>
+			<div class="title-content" style="margin-top: 50px;">Home Menu</div>
 			<center>
 			<?php 
 				if($hotspot == 'yes'){ 
@@ -96,6 +139,11 @@
 				<a href="<?php echo $button1_link; ?>" class="span4"><img src="<?php echo $button1_img; ?>">Connected Device</a>
 				<a href="<?php echo $button2_link; ?>" class="span4 menu-img"><img src="<?php echo $button2_img; ?>">Web Filter</a>
 				<a href="<?php echo $button3_link; ?>" class="span4 menu-img"><img src="<?php echo $button3_img; ?>">Activity Log</a>
+			</center>
+
+			<div class="title-content" style="margin-top: 50px;">Weekly Hotspot Used</div>
+			<center>
+				<canvas id="barChart" style="background-color: #f5f8fa;"></canvas>
 			</center>
 		</div>
 		<!--  Menu -->
@@ -130,6 +178,7 @@
 			<?php } ?>
 			<!-- hotspot info -->	
 
+			
 		</div>
 		<!-- Right Bar  pointer-events: none;-->
 
@@ -138,7 +187,71 @@
 </body>
 </html>
 
+<script src="dist/chart/Chart.min.js"></script>
+
 <script>
+	//chart js
+	var canvas = document.getElementById("barChart");
+	var ctx = canvas.getContext('2d');
+
+	Chart.defaults.global.defaultFontColor = 'black';
+	Chart.defaults.global.defaultFontSize = 16;
+
+	var data = {
+		labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+		datasets: [{
+			label: "Duration",
+			fill: false,
+			lineTension: 0.1,
+			backgroundColor: "rgba(225,0,0,0.4)",
+			borderCapStyle: 'square',
+			borderDashOffset: 0.0,
+			borderJoinStyle: 'miter',
+			pointBorderColor: "black",
+			pointBackgroundColor: "white",
+			pointBorderWidth: 1,
+			pointHoverRadius: 8,
+			pointHoverBackgroundColor: "yellow",
+			pointHoverBorderColor: "brown",
+			pointHoverBorderWidth: 2,
+			pointRadius: 4,
+			pointHitRadius: 10,
+			// notice the gap in the data and the spanGaps: true
+			data: <?php echo $weekgraph; ?>,
+			spanGaps: true,
+			}
+
+		]
+	};
+
+	var options = {
+		tooltips: {
+			callbacks: {
+				label: function(tooltipItem) {
+					return Number(tooltipItem.xLabel) + " Min ";
+				}
+			}
+		},
+        title: {
+			display: true,
+			text: '27 May - 02 Jun, 2019',
+			position: 'bottom'
+        },
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
+        }
+	};
+
+	// Chart declaration:
+	var myBarChart = new Chart(ctx, {
+		type: 'horizontalBar',
+		data: data,
+		options: options
+	});
 
 	//connected count
 	setInterval(function(){

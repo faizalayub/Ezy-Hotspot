@@ -2,7 +2,7 @@
 include('config.php');
 
 $max = $_SESSION['hotspotID'];
-//$TotalClient = 0;
+$TotalClient = 0;
 
 $clientCount = shell_exec('netsh wlan show hostednetwork | findstr "Number of clients"');
 $getClient = shell_exec('arp -a | findstr /r "192\.168\.137\.[2-9][^0-9] 192\.168\.137\.[0-9][0-9][^0-9] 192\.168\.137\.[0-1][0-9][0-9] 192\.168\.137\.2[0-46-9][0-9] 192\.168\.137\.25[0-4]"');
@@ -55,7 +55,7 @@ foreach($clientFinal as $c){
 }   
 
 //get total client
-/*$clientNo2 = json_encode($clientCount);
+$clientNo2 = json_encode($clientCount);
 $clientNo3 = trim($clientNo2,'"');
 $clientNo4 = array_map('trim',array_filter(explode('\n',$clientNo3)));
 foreach($clientNo4 as $clientNo5){
@@ -64,7 +64,7 @@ foreach($clientNo4 as $clientNo5){
     }else{
         $TotalClient = filter_var($clientNo5, FILTER_SANITIZE_NUMBER_INT);
     }
-}*/
+}
 
 //check disconnected client
 $clientInserted = fetchRows("SELECT client FROM client_note WHERE session='$max'");
@@ -85,8 +85,12 @@ if(!empty($clientDC)){
 
 //data content
 $getSession = fetchRow("SELECT * FROM session WHERE session_id='$max'");
-$getClient = fetchRows("SELECT * FROM client_note JOIN client on(client_note.client=client.mac) WHERE session='$max' ORDER by block_status DESC");
-$countClient = numRows("SELECT * FROM client_note JOIN client on(client_note.client=client.mac) WHERE session='$max' ORDER by block_status DESC");
+if($TotalClient > 0){
+	$getClient = fetchRows("SELECT * FROM client_note JOIN client on(client_note.client=client.mac) WHERE session='$max' ORDER by block_status DESC");
+}else{
+	$getClient = false;
+}
+//$countClient = numRows("SELECT * FROM client_note JOIN client on(client_note.client=client.mac) WHERE session='$max' ORDER by block_status DESC");
 ?>
 
 <div class="well">
@@ -113,7 +117,7 @@ $countClient = numRows("SELECT * FROM client_note JOIN client on(client_note.cli
             <td><b>Total Connected</b></td>
             <td>
                 <div class="badge"><i class="fa fa-user"></i> 
-                    <?php echo $countClient; ?>
+                    <?php echo $TotalClient; ?>
                 </div>
             </td>
         </tr>
